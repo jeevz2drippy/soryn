@@ -346,6 +346,28 @@
             to { transform: rotate(360deg); }
         }
         
+        /* Progress Bar */
+        .progress-bar-container {
+            width: 100%;
+            height: 30px;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            overflow: hidden;
+        }
+        
+        .progress-bar {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent-dim), var(--accent));
+            width: 0%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--bg-dark);
+            font-weight: bold;
+            font-size: 12px;
+        }
+        
         /* Responsive */
         @media (max-width: 768px) {
             .stats-bar {
@@ -520,16 +542,31 @@
     <div class="modal" id="restoreModal">
         <div class="modal-content">
             <div class="modal-header">📥 Restore from Backup</div>
-            <div class="form-group">
-                <label>Paste backup content or upload file</label>
-                <textarea id="restoreContent" rows="10" placeholder="Paste your backup JSON or text here..."></textarea>
+            <div id="restoreForm">
+                <div class="form-group">
+                    <label>Paste backup content or upload file</label>
+                    <textarea id="restoreContent" rows="8" placeholder="Paste your backup JSON or text here..."></textarea>
+                </div>
+                <div class="form-row" style="margin-top: 15px;">
+                    <input type="file" id="restoreFile" accept=".json,.txt" onchange="loadRestoreFile(event)">
+                </div>
+                <div class="form-row" style="margin-top: 15px;">
+                    <button class="btn primary" onclick="restoreBackup(false)">RESTORE (ADD)</button>
+                    <button class="btn" onclick="closeModal('restoreModal')">CANCEL</button>
+                </div>
             </div>
-            <div class="form-row" style="margin-top: 15px;">
-                <input type="file" id="restoreFile" accept=".json,.txt" onchange="loadRestoreFile(event)">
-            </div>
-            <div class="form-row" style="margin-top: 15px;">
-                <button class="btn primary" onclick="restoreBackup(false)">RESTORE (ADD)</button>
-                <button class="btn" onclick="closeModal('restoreModal')">CANCEL</button>
+            <div id="restoreProgress" style="display:none;">
+                <div class="progress-info">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="restoreProgressBar"></div>
+                    </div>
+                    <div id="restoreProgressText" style="margin-top: 15px; text-align: center;"></div>
+                    <div id="restoreCurrentKey" style="margin-top: 10px; font-size: 12px; color: var(--text-dim); text-align: center;"></div>
+                    <div id="restoreETA" style="margin-top: 10px; font-size: 14px; color: var(--accent); text-align: center;"></div>
+                </div>
+                <div class="form-row" style="margin-top: 20px;">
+                    <button class="btn danger" onclick="stopRestore()">⏹ STOP</button>
+                </div>
             </div>
             <div class="output" id="restoreOutput" style="display:none;"></div>
         </div>
@@ -539,17 +576,32 @@
     <div class="modal" id="wipeRestoreModal">
         <div class="modal-content">
             <div class="modal-header">🔄 Wipe & Restore</div>
-            <p style="color: var(--danger); margin-bottom: 20px;">⚠️ This will DELETE everything and restore from backup!</p>
-            <div class="form-group">
-                <label>Paste backup content or upload file</label>
-                <textarea id="wipeRestoreContent" rows="10" placeholder="Paste your backup JSON or text here..."></textarea>
+            <div id="wipeRestoreForm">
+                <p style="color: var(--danger); margin-bottom: 20px;">⚠️ This will DELETE everything and restore from backup!</p>
+                <div class="form-group">
+                    <label>Paste backup content or upload file</label>
+                    <textarea id="wipeRestoreContent" rows="8" placeholder="Paste your backup JSON or text here..."></textarea>
+                </div>
+                <div class="form-row" style="margin-top: 15px;">
+                    <input type="file" id="wipeRestoreFile" accept=".json,.txt" onchange="loadWipeRestoreFile(event)">
+                </div>
+                <div class="form-row" style="margin-top: 15px;">
+                    <button class="btn danger" onclick="wipeAndRestore()">⚠️ WIPE & RESTORE</button>
+                    <button class="btn" onclick="closeModal('wipeRestoreModal')">CANCEL</button>
+                </div>
             </div>
-            <div class="form-row" style="margin-top: 15px;">
-                <input type="file" id="wipeRestoreFile" accept=".json,.txt" onchange="loadWipeRestoreFile(event)">
-            </div>
-            <div class="form-row" style="margin-top: 15px;">
-                <button class="btn danger" onclick="wipeAndRestore()">⚠️ WIPE & RESTORE</button>
-                <button class="btn" onclick="closeModal('wipeRestoreModal')">CANCEL</button>
+            <div id="wipeRestoreProgress" style="display:none;">
+                <div class="progress-info">
+                    <div class="progress-bar-container">
+                        <div class="progress-bar" id="wipeRestoreProgressBar"></div>
+                    </div>
+                    <div id="wipeRestoreProgressText" style="margin-top: 15px; text-align: center;"></div>
+                    <div id="wipeRestoreCurrentKey" style="margin-top: 10px; font-size: 12px; color: var(--text-dim); text-align: center;"></div>
+                    <div id="wipeRestoreETA" style="margin-top: 10px; font-size: 14px; color: var(--accent); text-align: center;"></div>
+                </div>
+                <div class="form-row" style="margin-top: 20px;">
+                    <button class="btn danger" onclick="stopRestore()">⏹ STOP</button>
+                </div>
             </div>
             <div class="output" id="wipeRestoreOutput" style="display:none;"></div>
         </div>
@@ -850,88 +902,137 @@
             }
         }
         
-        // Restore backup
+        // Restore backup with progress
+        let restorePolling = null;
+        let restoreStartTime = null;
+        
         async function restoreBackup(wipeFirst) {
-            const content = document.getElementById('restoreContent').value;
-            const output = document.getElementById('restoreOutput');
+            const contentId = wipeFirst ? 'wipeRestoreContent' : 'restoreContent';
+            const content = document.getElementById(contentId).value;
             
             if (!content.trim()) {
                 alert('Please paste backup content or upload a file');
                 return;
             }
             
-            output.style.display = 'block';
-            output.innerHTML = '<span class="info">Parsing backup...</span>';
-            
-            // Parse the content
+            // Parse the content first
             const parseResult = await api('/api/parse-backup', 'POST', { content });
             
             if (!parseResult.success || parseResult.licenses.length === 0) {
-                output.innerHTML = '<span class="error">❌ Could not parse backup file</span>';
+                alert('Could not parse backup file - no licenses found');
                 return;
             }
             
-            output.innerHTML = `<span class="info">Found ${parseResult.licenses.length} licenses. Restoring...</span>`;
+            const totalLicenses = parseResult.licenses.length;
+            const estimatedTime = Math.ceil((totalLicenses * 2) / 60); // ~2 sec per key
             
-            // Restore
-            const result = await api('/api/restore', 'POST', { 
+            if (!confirm(`Found ${totalLicenses} licenses.\n\nEstimated time: ~${estimatedTime} minutes\n\n${wipeFirst ? '⚠️ This will WIPE everything first!\n\n' : ''}Continue?`)) {
+                return;
+            }
+            
+            // Show progress UI
+            const formId = wipeFirst ? 'wipeRestoreForm' : 'restoreForm';
+            const progressId = wipeFirst ? 'wipeRestoreProgress' : 'restoreProgress';
+            
+            document.getElementById(formId).style.display = 'none';
+            document.getElementById(progressId).style.display = 'block';
+            
+            restoreStartTime = Date.now();
+            
+            // Start restore
+            await api('/api/restore', 'POST', { 
                 licenses: parseResult.licenses, 
                 wipeFirst 
             });
             
-            if (result.success) {
-                output.innerHTML = `<span class="success">✅ Restore complete!</span>\n` +
-                    `<span class="success">Added: ${result.added}</span>\n` +
-                    `<span class="info">Skipped: ${result.skipped}</span>\n` +
-                    `<span class="error">Failed: ${result.failed}</span>`;
-                refreshData();
-            } else {
-                output.innerHTML = `<span class="error">❌ Error: ${result.error}</span>`;
+            // Start polling for progress
+            startRestorePolling(wipeFirst);
+        }
+        
+        function startRestorePolling(isWipeRestore) {
+            const prefix = isWipeRestore ? 'wipeRestore' : 'restore';
+            
+            restorePolling = setInterval(async () => {
+                try {
+                    const status = await api('/api/restore/status');
+                    
+                    const percent = status.total > 0 ? Math.round((status.processed / status.total) * 100) : 0;
+                    
+                    // Update progress bar
+                    const bar = document.getElementById(`${prefix}ProgressBar`);
+                    bar.style.width = `${percent}%`;
+                    bar.textContent = `${percent}%`;
+                    
+                    // Update text
+                    document.getElementById(`${prefix}ProgressText`).innerHTML = 
+                        `<span class="success">✅ ${status.success}</span> added | ` +
+                        `<span class="info">${status.skipped}</span> skipped | ` +
+                        `<span class="error">${status.failed}</span> failed | ` +
+                        `<strong>${status.processed}/${status.total}</strong>`;
+                    
+                    document.getElementById(`${prefix}CurrentKey`).textContent = 
+                        status.currentKey ? `Current: ${status.currentKey}` : '';
+                    
+                    // Calculate ETA
+                    if (status.processed > 0 && status.running) {
+                        const elapsed = (Date.now() - restoreStartTime) / 1000;
+                        const rate = status.processed / elapsed;
+                        const remaining = (status.total - status.processed) / rate;
+                        const mins = Math.floor(remaining / 60);
+                        const secs = Math.floor(remaining % 60);
+                        
+                        const etaEl = document.getElementById(`${prefix}ETA`);
+                        if (etaEl) {
+                            etaEl.textContent = `ETA: ${mins}m ${secs}s remaining`;
+                        }
+                    }
+                    
+                    // Check if done
+                    if (!status.running) {
+                        clearInterval(restorePolling);
+                        restorePolling = null;
+                        
+                        // Show completion
+                        setTimeout(() => {
+                            const output = document.getElementById(`${prefix}Output`);
+                            output.style.display = 'block';
+                            
+                            if (status.error) {
+                                output.innerHTML = `<span class="error">❌ ${status.error}</span>`;
+                            } else {
+                                output.innerHTML = 
+                                    `<span class="success">✅ RESTORE COMPLETE!</span>\n\n` +
+                                    `<span class="success">Added: ${status.success}</span>\n` +
+                                    `<span class="info">Skipped: ${status.skipped}</span>\n` +
+                                    `<span class="error">Failed: ${status.failed}</span>`;
+                            }
+                            
+                            // Reset form
+                            document.getElementById(`${prefix}Form`).style.display = 'block';
+                            document.getElementById(`${prefix}Progress`).style.display = 'none';
+                            
+                            refreshData();
+                        }, 1000);
+                    }
+                } catch (e) {
+                    console.error('Polling error:', e);
+                }
+            }, 1000); // Poll every second
+        }
+        
+        async function stopRestore() {
+            if (confirm('Stop the restore process?')) {
+                await api('/api/restore/stop', 'POST');
+                if (restorePolling) {
+                    clearInterval(restorePolling);
+                    restorePolling = null;
+                }
             }
         }
         
         // Wipe and restore
         async function wipeAndRestore() {
-            const content = document.getElementById('wipeRestoreContent').value;
-            const output = document.getElementById('wipeRestoreOutput');
-            
-            if (!content.trim()) {
-                alert('Please paste backup content or upload a file');
-                return;
-            }
-            
-            if (!confirm('⚠️ THIS WILL DELETE EVERYTHING!\n\nAre you sure you want to WIPE and RESTORE?')) {
-                return;
-            }
-            
-            output.style.display = 'block';
-            output.innerHTML = '<span class="info">Parsing backup...</span>';
-            
-            // Parse
-            const parseResult = await api('/api/parse-backup', 'POST', { content });
-            
-            if (!parseResult.success || parseResult.licenses.length === 0) {
-                output.innerHTML = '<span class="error">❌ Could not parse backup file</span>';
-                return;
-            }
-            
-            output.innerHTML = `<span class="info">Found ${parseResult.licenses.length} licenses. Wiping database...</span>`;
-            
-            // Restore with wipe
-            const result = await api('/api/restore', 'POST', { 
-                licenses: parseResult.licenses, 
-                wipeFirst: true 
-            });
-            
-            if (result.success) {
-                output.innerHTML = `<span class="success">✅ Wipe & Restore complete!</span>\n` +
-                    `<span class="success">Added: ${result.added}</span>\n` +
-                    `<span class="info">Skipped: ${result.skipped}</span>\n` +
-                    `<span class="error">Failed: ${result.failed}</span>`;
-                refreshData();
-            } else {
-                output.innerHTML = `<span class="error">❌ Error: ${result.error}</span>`;
-            }
+            await restoreBackup(true);
         }
         
         // Wipe functions
