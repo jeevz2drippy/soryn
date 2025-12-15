@@ -364,30 +364,81 @@ app.get('/api/backup', async (req, res) => {
     }
 });
 
-// Restore from backup
+// Restore status tracking
+let restoreStatus = {
+    running: false,
+    total: 0,
+    processed: 0,
+    success: 0,
+    skipped: 0,
+    failed: 0,
+    currentKey: '',
+    error: null
+};
+
+// Get restore status
+app.get('/api/restore/status', (req, res) => {
+    res.json(restoreStatus);
+});
+
+// Stop restore
+app.post('/api/restore/stop', (req, res) => {
+    restoreStatus.running = false;
+    res.json({ success: true });
+});
+
+// Restore from backup - with proper rate limiting
 app.post('/api/restore', async (req, res) => {
     try {
         if (!SELLER_KEY) throw new Error('Not connected');
+        if (restoreStatus.running) throw new Error('Restore already in progress');
+        
         const { licenses, wipeFirst } = req.body;
         
         if (!licenses || !Array.isArray(licenses)) {
             throw new Error('Invalid licenses data');
         }
         
+        // Reset status
+        restoreStatus = {
+            running: true,
+            total: licenses.length,
+            processed: 0,
+            success: 0,
+            skipped: 0,
+            failed: 0,
+            currentKey: '',
+            error: null
+        };
+        
+        // Send immediate response
+        res.json({ success: true, message: 'Restore started', total: licenses.length });
+        
         // Wipe if requested
         if (wipeFirst) {
+            restoreStatus.currentKey = 'Wiping database...';
             const wipeKeys = new URLSearchParams({ sellerkey: SELLER_KEY, type: 'delallkeys' });
             const wipeUsers = new URLSearchParams({ sellerkey: SELLER_KEY, type: 'delallusers' });
             await makeKeyAuthRequest(wipeKeys);
+            await sleep(2000); // Wait after wipe
             await makeKeyAuthRequest(wipeUsers);
+            await sleep(3000); // Wait before starting adds
         }
         
-        let success = 0, failed = 0, skipped = 0;
-        
-        for (const license of licenses) {
+        // Process licenses with SLOW rate limiting
+        for (let i = 0; i < licenses.length; i++) {
+            if (!restoreStatus.running) {
+                restoreStatus.error = 'Stopped by user';
+                break;
+            }
+            
+            const license = licenses[i];
             const key = license.key;
             const duration = license.duration || parseDurationFromKeyName(key);
             const level = license.level || '1';
+            
+            restoreStatus.currentKey = key;
+            restoreStatus.processed = i + 1;
             
             const params = new URLSearchParams({
                 sellerkey: SELLER_KEY,
@@ -397,25 +448,64 @@ app.post('/api/restore', async (req, res) => {
                 level: level
             });
             
-            try {
-                const result = await makeKeyAuthRequest(params);
-                if (result.success) {
-                    success++;
-                } else if (result.message && result.message.toLowerCase().includes('already')) {
-                    skipped++;
-                } else {
-                    failed++;
+            let retries = 3;
+            let added = false;
+            
+            while (retries > 0 && !added) {
+                try {
+                    const result = await makeKeyAuthRequest(params);
+                    
+                    if (result.success) {
+                        restoreStatus.success++;
+                        added = true;
+                    } else if (result.message) {
+                        const msg = result.message.toLowerCase();
+                        if (msg.includes('already') || msg.includes('exists') || msg.includes('duplicate')) {
+                            restoreStatus.skipped++;
+                            added = true; // Don't retry
+                        } else if (msg.includes('rate') || msg.includes('limit') || msg.includes('slow')) {
+                            // Rate limited - wait longer and retry
+                            console.log(`Rate limited on ${key}, waiting 10s...`);
+                            await sleep(10000);
+                            retries--;
+                        } else {
+                            restoreStatus.failed++;
+                            added = true; // Don't retry other errors
+                        }
+                    } else {
+                        restoreStatus.failed++;
+                        added = true;
+                    }
+                } catch (e) {
+                    console.log(`Error on ${key}: ${e.message}, retrying...`);
+                    await sleep(5000);
+                    retries--;
+                    if (retries === 0) {
+                        restoreStatus.failed++;
+                    }
                 }
-            } catch (e) {
-                failed++;
             }
             
-            await sleep(50); // Rate limit
+            // SLOW DOWN - 1.5 seconds between each key
+            await sleep(1500);
+            
+            // Extra pause every 20 keys
+            if ((i + 1) % 20 === 0) {
+                console.log(`Processed ${i + 1}/${licenses.length}, pausing 5s...`);
+                await sleep(5000);
+            }
         }
         
-        res.json({ success: true, added: success, skipped, failed });
+        restoreStatus.running = false;
+        restoreStatus.currentKey = 'Complete';
+        console.log(`Restore complete: ${restoreStatus.success} added, ${restoreStatus.skipped} skipped, ${restoreStatus.failed} failed`);
+        
     } catch (error) {
-        res.json({ success: false, error: error.message });
+        restoreStatus.running = false;
+        restoreStatus.error = error.message;
+        if (!res.headersSent) {
+            res.json({ success: false, error: error.message });
+        }
     }
 });
 
