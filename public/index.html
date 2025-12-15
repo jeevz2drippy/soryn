@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SORYN // LICENSE COMMAND</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        :root {
+            --bg-dark: #0a0a0a;
+            --bg-panel: #111111;
+            --bg-card: #1a1a1a;
+            --border: #2a2a2a;
+            --accent: #00ff88;
+            --accent-dim: #00aa55;
+            --danger: #ff4444;
+            --warning: #ffaa00;
+            --text: #ffffff;
+            --text-dim: #888888;
+        }
+        
+        body {
+            font-family: 'Consolas', 'Monaco', monospace;
+            background: var(--bg-dark);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        
+        /* Header */
+        .header {
+            background: var(--bg-panel);
+            border-bottom: 2px solid var(--accent);
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 28px;
+            letter-spacing: 8px;
+            color: var(--accent);
+            text-transform: uppercase;
+        }
+        
+        .header .status {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .status-dot {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        
+        .status-dot.online { background: var(--accent); }
+        .status-dot.offline { background: var(--danger); animation: none; }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* Main Layout */
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Stats Bar */
+        .stats-bar {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .stat-box {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 20px;
+            text-align: center;
+        }
+        
+        .stat-box .number {
+            font-size: 36px;
+            font-weight: bold;
+            color: var(--accent);
+        }
+        
+        .stat-box .label {
+            font-size: 12px;
+            color: var(--text-dim);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-top: 5px;
+        }
+        
+        /* Sections */
+        .section {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+        
+        .section-header {
+            background: var(--bg-panel);
+            padding: 15px 20px;
+            border-bottom: 1px solid var(--border);
+            font-size: 14px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--accent);
+        }
+        
+        .section-body {
+            padding: 20px;
+        }
+        
+        /* Buttons */
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        
+        .btn {
+            padding: 20px 30px;
+            font-size: 14px;
+            font-family: inherit;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            border: 2px solid var(--border);
+            background: var(--bg-panel);
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn:hover {
+            border-color: var(--accent);
+            background: var(--bg-card);
+        }
+        
+        .btn:active {
+            transform: scale(0.98);
+        }
+        
+        .btn.primary {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+        
+        .btn.primary:hover {
+            background: var(--accent);
+            color: var(--bg-dark);
+        }
+        
+        .btn.danger {
+            border-color: var(--danger);
+            color: var(--danger);
+        }
+        
+        .btn.danger:hover {
+            background: var(--danger);
+            color: var(--text);
+        }
+        
+        .btn.warning {
+            border-color: var(--warning);
+            color: var(--warning);
+        }
+        
+        .btn.warning:hover {
+            background: var(--warning);
+            color: var(--bg-dark);
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        /* Forms */
+        .form-row {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+        
+        .form-group {
+            flex: 1;
+        }
+        
+        .form-group label {
+            display: block;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-dim);
+            margin-bottom: 8px;
+        }
+        
+        input, select, textarea {
+            width: 100%;
+            padding: 12px 15px;
+            font-size: 14px;
+            font-family: inherit;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text);
+            outline: none;
+        }
+        
+        input:focus, select:focus, textarea:focus {
+            border-color: var(--accent);
+        }
+        
+        /* Table */
+        .table-container {
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        th {
+            background: var(--bg-panel);
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--accent);
+            position: sticky;
+            top: 0;
+        }
+        
+        tr:hover {
+            background: var(--bg-panel);
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 4px 10px;
+            font-size: 11px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .status-badge.active { background: var(--accent); color: var(--bg-dark); }
+        .status-badge.unused { background: var(--border); color: var(--text); }
+        .status-badge.banned { background: var(--danger); color: var(--text); }
+        .status-badge.expired { background: var(--warning); color: var(--bg-dark); }
+        
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .modal.active {
+            display: flex;
+        }
+        
+        .modal-content {
+            background: var(--bg-card);
+            border: 2px solid var(--accent);
+            padding: 30px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+        
+        .modal-header {
+            font-size: 18px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--accent);
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        /* Output/Log */
+        .output {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            padding: 15px;
+            font-size: 13px;
+            max-height: 200px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            margin-top: 15px;
+        }
+        
+        .output .success { color: var(--accent); }
+        .output .error { color: var(--danger); }
+        .output .info { color: var(--text-dim); }
+        
+        /* Loading */
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--text-dim);
+        }
+        
+        .spinner {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Responsive */
+        @media (max-width: 768px) {
+            .stats-bar {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .btn-grid {
+                grid-template-columns: 1fr;
+            }
+            .form-row {
+                flex-direction: column;
+            }
+        }
+        
+        /* Quick Actions */
+        .quick-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        
+        .quick-btn {
+            padding: 8px 15px;
+            font-size: 11px;
+            background: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-dim);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .quick-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <h1>⚡ SORYN // LICENSE COMMAND</h1>
+        <div class="status">
+            <span class="status-dot" id="statusDot"></span>
+            <span id="statusText">CONNECTING...</span>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Stats -->
+        <div class="stats-bar">
+            <div class="stat-box">
+                <div class="number" id="totalLicenses">-</div>
+                <div class="label">Total Licenses</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="usedLicenses">-</div>
+                <div class="label">Used</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="unusedLicenses">-</div>
+                <div class="label">Unused</div>
+            </div>
+            <div class="stat-box">
+                <div class="number" id="totalUsers">-</div>
+                <div class="label">Users</div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions -->
+        <div class="section">
+            <div class="section-header">⚡ Quick Actions</div>
+            <div class="section-body">
+                <div class="btn-grid">
+                    <button class="btn primary" onclick="refreshData()">🔄 REFRESH DATA</button>
+                    <button class="btn primary" onclick="openGenerateModal()">➕ GENERATE LICENSES</button>
+                    <button class="btn" onclick="openBackupModal()">💾 BACKUP DATABASE</button>
+                    <button class="btn" onclick="openRestoreModal()">📥 RESTORE BACKUP</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Wipe Section -->
+        <div class="section">
+            <div class="section-header">🗑️ Wipe Operations</div>
+            <div class="section-body">
+                <div class="btn-grid">
+                    <button class="btn warning" onclick="wipeUnused()">DELETE UNUSED</button>
+                    <button class="btn warning" onclick="wipeUsed()">DELETE USED</button>
+                    <button class="btn danger" onclick="wipeAllLicenses()">DELETE ALL LICENSES</button>
+                    <button class="btn danger" onclick="wipeAllUsers()">DELETE ALL USERS</button>
+                    <button class="btn danger" onclick="fullWipe()">⚠️ FULL WIPE</button>
+                    <button class="btn danger" onclick="openWipeRestoreModal()">🔄 WIPE & RESTORE</button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Licenses Table -->
+        <div class="section">
+            <div class="section-header">📋 Licenses</div>
+            <div class="section-body">
+                <div class="quick-actions" style="margin-bottom: 15px;">
+                    <input type="text" id="searchLicense" placeholder="Search license..." style="width: 300px;">
+                </div>
+                <div class="table-container" id="licensesTable">
+                    <div class="loading"><div class="spinner"></div><br>Loading...</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Users Table -->
+        <div class="section">
+            <div class="section-header">👥 Users</div>
+            <div class="section-body">
+                <div class="table-container" id="usersTable">
+                    <div class="loading"><div class="spinner"></div><br>Loading...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Generate Modal -->
+    <div class="modal" id="generateModal">
+        <div class="modal-content">
+            <div class="modal-header">➕ Generate Licenses</div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Amount</label>
+                    <input type="number" id="genAmount" value="1" min="1" max="100">
+                </div>
+                <div class="form-group">
+                    <label>Duration</label>
+                    <select id="genDuration">
+                        <option value="86400">1 Day</option>
+                        <option value="604800">7 Days</option>
+                        <option value="2592000">30 Days</option>
+                        <option value="7776000">90 Days</option>
+                        <option value="31536000">1 Year</option>
+                        <option value="999999999" selected>Lifetime</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Level</label>
+                    <input type="number" id="genLevel" value="1" min="1">
+                </div>
+                <div class="form-group">
+                    <label>Format (X = random)</label>
+                    <input type="text" id="genMask" value="Soryn-XXXXX-Lifetime">
+                </div>
+            </div>
+            <div class="form-row">
+                <button class="btn primary" onclick="generateLicenses()">GENERATE</button>
+                <button class="btn" onclick="closeModal('generateModal')">CANCEL</button>
+            </div>
+            <div class="output" id="generateOutput" style="display:none;"></div>
+        </div>
+    </div>
+    
+    <!-- Backup Modal -->
+    <div class="modal" id="backupModal">
+        <div class="modal-content">
+            <div class="modal-header">💾 Backup Database</div>
+            <p style="color: var(--text-dim); margin-bottom: 20px;">Export all licenses and users to JSON file.</p>
+            <div class="form-row">
+                <button class="btn primary" onclick="downloadBackup()">DOWNLOAD BACKUP</button>
+                <button class="btn" onclick="closeModal('backupModal')">CANCEL</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Restore Modal -->
+    <div class="modal" id="restoreModal">
+        <div class="modal-content">
+            <div class="modal-header">📥 Restore from Backup</div>
+            <div class="form-group">
+                <label>Paste backup content or upload file</label>
+                <textarea id="restoreContent" rows="10" placeholder="Paste your backup JSON or text here..."></textarea>
+            </div>
+            <div class="form-row" style="margin-top: 15px;">
+                <input type="file" id="restoreFile" accept=".json,.txt" onchange="loadRestoreFile(event)">
+            </div>
+            <div class="form-row" style="margin-top: 15px;">
+                <button class="btn primary" onclick="restoreBackup(false)">RESTORE (ADD)</button>
+                <button class="btn" onclick="closeModal('restoreModal')">CANCEL</button>
+            </div>
+            <div class="output" id="restoreOutput" style="display:none;"></div>
+        </div>
+    </div>
+    
+    <!-- Wipe & Restore Modal -->
+    <div class="modal" id="wipeRestoreModal">
+        <div class="modal-content">
+            <div class="modal-header">🔄 Wipe & Restore</div>
+            <p style="color: var(--danger); margin-bottom: 20px;">⚠️ This will DELETE everything and restore from backup!</p>
+            <div class="form-group">
+                <label>Paste backup content or upload file</label>
+                <textarea id="wipeRestoreContent" rows="10" placeholder="Paste your backup JSON or text here..."></textarea>
+            </div>
+            <div class="form-row" style="margin-top: 15px;">
+                <input type="file" id="wipeRestoreFile" accept=".json,.txt" onchange="loadWipeRestoreFile(event)">
+            </div>
+            <div class="form-row" style="margin-top: 15px;">
+                <button class="btn danger" onclick="wipeAndRestore()">⚠️ WIPE & RESTORE</button>
+                <button class="btn" onclick="closeModal('wipeRestoreModal')">CANCEL</button>
+            </div>
+            <div class="output" id="wipeRestoreOutput" style="display:none;"></div>
+        </div>
+    </div>
+    
+    <!-- License Action Modal -->
+    <div class="modal" id="licenseModal">
+        <div class="modal-content">
+            <div class="modal-header">🔑 License: <span id="licenseModalKey"></span></div>
+            <div class="btn-grid">
+                <button class="btn warning" onclick="banLicense()">🚫 BAN</button>
+                <button class="btn primary" onclick="unbanLicense()">✅ UNBAN</button>
+                <button class="btn danger" onclick="deleteLicense()">🗑️ DELETE</button>
+            </div>
+            <div style="margin-top: 20px;">
+                <button class="btn" onclick="closeModal('licenseModal')">CLOSE</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- User Action Modal -->
+    <div class="modal" id="userModal">
+        <div class="modal-content">
+            <div class="modal-header">👤 User: <span id="userModalName"></span></div>
+            <div class="btn-grid">
+                <button class="btn warning" onclick="resetHWID()">🔄 RESET HWID</button>
+                <button class="btn danger" onclick="deleteUser()">🗑️ DELETE USER</button>
+            </div>
+            <div style="margin-top: 20px;">
+                <button class="btn" onclick="closeModal('userModal')">CLOSE</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // State
+        let licenses = [];
+        let users = [];
+        let selectedLicense = null;
+        let selectedUser = null;
+        
+        // API Base
+        const API = '';
+        
+        // Fetch wrapper
+        async function api(endpoint, method = 'GET', body = null) {
+            const options = { method, headers: { 'Content-Type': 'application/json' } };
+            if (body) options.body = JSON.stringify(body);
+            const res = await fetch(API + endpoint, options);
+            return res.json();
+        }
+        
+        // Initialize
+        async function init() {
+            await checkStatus();
+            await refreshData();
+            
+            // Search filter
+            document.getElementById('searchLicense').addEventListener('input', (e) => {
+                renderLicenses(e.target.value);
+            });
+        }
+        
+        // Check connection
+        async function checkStatus() {
+            try {
+                const data = await api('/api/health');
+                const dot = document.getElementById('statusDot');
+                const text = document.getElementById('statusText');
+                
+                if (data.connected) {
+                    dot.className = 'status-dot online';
+                    text.textContent = 'CONNECTED // KEYAUTH ONLINE';
+                } else {
+                    dot.className = 'status-dot offline';
+                    text.textContent = 'DISCONNECTED';
+                }
+            } catch (e) {
+                document.getElementById('statusDot').className = 'status-dot offline';
+                document.getElementById('statusText').textContent = 'ERROR: ' + e.message;
+            }
+        }
+        
+        // Refresh data
+        async function refreshData() {
+            try {
+                const [licData, userData] = await Promise.all([
+                    api('/api/licenses'),
+                    api('/api/users')
+                ]);
+                
+                licenses = licData.licenses || [];
+                users = userData.users || [];
+                
+                updateStats();
+                renderLicenses();
+                renderUsers();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+        
+        // Update stats
+        function updateStats() {
+            const used = licenses.filter(l => l.usedby && l.usedby !== '').length;
+            const unused = licenses.length - used;
+            
+            document.getElementById('totalLicenses').textContent = licenses.length;
+            document.getElementById('usedLicenses').textContent = used;
+            document.getElementById('unusedLicenses').textContent = unused;
+            document.getElementById('totalUsers').textContent = users.length;
+        }
+        
+        // Render licenses table
+        function renderLicenses(filter = '') {
+            const container = document.getElementById('licensesTable');
+            const filtered = filter ? licenses.filter(l => 
+                l.key.toLowerCase().includes(filter.toLowerCase())
+            ) : licenses;
+            
+            if (filtered.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-dim); padding: 20px;">No licenses found</p>';
+                return;
+            }
+            
+            let html = `<table>
+                <thead>
+                    <tr>
+                        <th>License Key</th>
+                        <th>Status</th>
+                        <th>Level</th>
+                        <th>Used By</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            
+            filtered.forEach(l => {
+                const status = l.usedby ? (l.status || 'Used') : 'Not Used';
+                const statusClass = status.toLowerCase().includes('ban') ? 'banned' : 
+                                   status === 'Used' ? 'active' : 'unused';
+                
+                html += `<tr>
+                    <td style="font-family: monospace;">${l.key}</td>
+                    <td><span class="status-badge ${statusClass}">${status}</span></td>
+                    <td>${l.level || '1'}</td>
+                    <td>${l.usedby || '-'}</td>
+                    <td>
+                        <button class="quick-btn" onclick="openLicenseModal('${l.key}')">MANAGE</button>
+                    </td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        // Render users table
+        function renderUsers() {
+            const container = document.getElementById('usersTable');
+            
+            if (users.length === 0) {
+                container.innerHTML = '<p style="color: var(--text-dim); padding: 20px;">No users found</p>';
+                return;
+            }
+            
+            let html = `<table>
+                <thead>
+                    <tr>
+                        <th>Username</th>
+                        <th>HWID</th>
+                        <th>Last Login</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>`;
+            
+            users.forEach(u => {
+                const hwid = u.hwid || 'None';
+                const lastLogin = u.lastlogin ? new Date(u.lastlogin * 1000).toLocaleDateString() : 'Never';
+                
+                html += `<tr>
+                    <td style="font-family: monospace;">${u.username}</td>
+                    <td style="font-size: 11px;">${hwid.substring(0, 16)}</td>
+                    <td>${lastLogin}</td>
+                    <td>
+                        <button class="quick-btn" onclick="openUserModal('${u.username}')">MANAGE</button>
+                    </td>
+                </tr>`;
+            });
+            
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
+        
+        // Modal functions
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+        
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+        
+        function openGenerateModal() {
+            document.getElementById('generateOutput').style.display = 'none';
+            openModal('generateModal');
+        }
+        
+        function openBackupModal() {
+            openModal('backupModal');
+        }
+        
+        function openRestoreModal() {
+            document.getElementById('restoreContent').value = '';
+            document.getElementById('restoreOutput').style.display = 'none';
+            openModal('restoreModal');
+        }
+        
+        function openWipeRestoreModal() {
+            document.getElementById('wipeRestoreContent').value = '';
+            document.getElementById('wipeRestoreOutput').style.display = 'none';
+            openModal('wipeRestoreModal');
+        }
+        
+        function openLicenseModal(key) {
+            selectedLicense = key;
+            document.getElementById('licenseModalKey').textContent = key;
+            openModal('licenseModal');
+        }
+        
+        function openUserModal(username) {
+            selectedUser = username;
+            document.getElementById('userModalName').textContent = username;
+            openModal('userModal');
+        }
+        
+        // Generate licenses
+        async function generateLicenses() {
+            const amount = document.getElementById('genAmount').value;
+            const duration = document.getElementById('genDuration').value;
+            const level = document.getElementById('genLevel').value;
+            const mask = document.getElementById('genMask').value;
+            
+            const output = document.getElementById('generateOutput');
+            output.style.display = 'block';
+            output.innerHTML = '<span class="info">Generating...</span>';
+            
+            const result = await api('/api/generate', 'POST', { amount, duration, level, mask });
+            
+            if (result.success) {
+                output.innerHTML = `<span class="success">✅ Generated ${result.keys.length} license(s):</span>\n\n` +
+                    result.keys.map(k => `<span class="success">${k}</span>`).join('\n');
+                refreshData();
+            } else {
+                output.innerHTML = `<span class="error">❌ Error: ${result.error}</span>`;
+            }
+        }
+        
+        // Download backup
+        async function downloadBackup() {
+            const result = await api('/api/backup');
+            
+            if (result.success) {
+                const blob = new Blob([JSON.stringify(result.backup, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `soryn-backup-${new Date().toISOString().slice(0,10)}.json`;
+                a.click();
+                URL.revokeObjectURL(url);
+                closeModal('backupModal');
+            } else {
+                alert('Error: ' + result.error);
+            }
+        }
+        
+        // Load restore file
+        function loadRestoreFile(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('restoreContent').value = e.target.result;
+                };
+                reader.readAsText(file);
+            }
+        }
+        
+        function loadWipeRestoreFile(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    document.getElementById('wipeRestoreContent').value = e.target.result;
+                };
+                reader.readAsText(file);
+            }
+        }
+        
+        // Restore backup
+        async function restoreBackup(wipeFirst) {
+            const content = document.getElementById('restoreContent').value;
+            const output = document.getElementById('restoreOutput');
+            
+            if (!content.trim()) {
+                alert('Please paste backup content or upload a file');
+                return;
+            }
+            
+            output.style.display = 'block';
+            output.innerHTML = '<span class="info">Parsing backup...</span>';
+            
+            // Parse the content
+            const parseResult = await api('/api/parse-backup', 'POST', { content });
+            
+            if (!parseResult.success || parseResult.licenses.length === 0) {
+                output.innerHTML = '<span class="error">❌ Could not parse backup file</span>';
+                return;
+            }
+            
+            output.innerHTML = `<span class="info">Found ${parseResult.licenses.length} licenses. Restoring...</span>`;
+            
+            // Restore
+            const result = await api('/api/restore', 'POST', { 
+                licenses: parseResult.licenses, 
+                wipeFirst 
+            });
+            
+            if (result.success) {
+                output.innerHTML = `<span class="success">✅ Restore complete!</span>\n` +
+                    `<span class="success">Added: ${result.added}</span>\n` +
+                    `<span class="info">Skipped: ${result.skipped}</span>\n` +
+                    `<span class="error">Failed: ${result.failed}</span>`;
+                refreshData();
+            } else {
+                output.innerHTML = `<span class="error">❌ Error: ${result.error}</span>`;
+            }
+        }
+        
+        // Wipe and restore
+        async function wipeAndRestore() {
+            const content = document.getElementById('wipeRestoreContent').value;
+            const output = document.getElementById('wipeRestoreOutput');
+            
+            if (!content.trim()) {
+                alert('Please paste backup content or upload a file');
+                return;
+            }
+            
+            if (!confirm('⚠️ THIS WILL DELETE EVERYTHING!\n\nAre you sure you want to WIPE and RESTORE?')) {
+                return;
+            }
+            
+            output.style.display = 'block';
+            output.innerHTML = '<span class="info">Parsing backup...</span>';
+            
+            // Parse
+            const parseResult = await api('/api/parse-backup', 'POST', { content });
+            
+            if (!parseResult.success || parseResult.licenses.length === 0) {
+                output.innerHTML = '<span class="error">❌ Could not parse backup file</span>';
+                return;
+            }
+            
+            output.innerHTML = `<span class="info">Found ${parseResult.licenses.length} licenses. Wiping database...</span>`;
+            
+            // Restore with wipe
+            const result = await api('/api/restore', 'POST', { 
+                licenses: parseResult.licenses, 
+                wipeFirst: true 
+            });
+            
+            if (result.success) {
+                output.innerHTML = `<span class="success">✅ Wipe & Restore complete!</span>\n` +
+                    `<span class="success">Added: ${result.added}</span>\n` +
+                    `<span class="info">Skipped: ${result.skipped}</span>\n` +
+                    `<span class="error">Failed: ${result.failed}</span>`;
+                refreshData();
+            } else {
+                output.innerHTML = `<span class="error">❌ Error: ${result.error}</span>`;
+            }
+        }
+        
+        // Wipe functions
+        async function wipeUnused() {
+            if (!confirm('Delete all UNUSED licenses?')) return;
+            const result = await api('/api/wipe/unused', 'POST');
+            alert(result.success ? '✅ Unused licenses deleted!' : '❌ Error: ' + result.error);
+            refreshData();
+        }
+        
+        async function wipeUsed() {
+            if (!confirm('⚠️ Delete all USED licenses? Active users will lose access!')) return;
+            const result = await api('/api/wipe/used', 'POST');
+            alert(result.success ? '✅ Used licenses deleted!' : '❌ Error: ' + result.error);
+            refreshData();
+        }
+        
+        async function wipeAllLicenses() {
+            if (!confirm('⚠️ DELETE ALL LICENSES?')) return;
+            if (!confirm('Are you SURE? This cannot be undone!')) return;
+            const result = await api('/api/wipe/licenses', 'POST');
+            alert(result.success ? '✅ All licenses deleted!' : '❌ Error: ' + result.error);
+            refreshData();
+        }
+        
+        async function wipeAllUsers() {
+            if (!confirm('⚠️ DELETE ALL USERS? This removes all HWID bindings!')) return;
+            const result = await api('/api/wipe/users', 'POST');
+            alert(result.success ? '✅ All users deleted!' : '❌ Error: ' + result.error);
+            refreshData();
+        }
+        
+        async function fullWipe() {
+            if (!confirm('⚠️⚠️⚠️ FULL WIPE - DELETE EVERYTHING?')) return;
+            if (!confirm('FINAL WARNING: This will delete ALL licenses AND users!')) return;
+            const result = await api('/api/wipe/full', 'POST');
+            alert(result.success ? '✅ Full wipe complete!' : '❌ Error: ' + result.error);
+            refreshData();
+        }
+        
+        // License actions
+        async function banLicense() {
+            const reason = prompt('Ban reason (optional):');
+            const result = await api('/api/license/ban', 'POST', { key: selectedLicense, reason });
+            alert(result.success ? '✅ License banned!' : '❌ Error: ' + result.error);
+            closeModal('licenseModal');
+            refreshData();
+        }
+        
+        async function unbanLicense() {
+            const result = await api('/api/license/unban', 'POST', { key: selectedLicense });
+            alert(result.success ? '✅ License unbanned!' : '❌ Error: ' + result.error);
+            closeModal('licenseModal');
+            refreshData();
+        }
+        
+        async function deleteLicense() {
+            if (!confirm(`Delete license ${selectedLicense}?`)) return;
+            const result = await api('/api/license/delete', 'POST', { key: selectedLicense });
+            alert(result.success ? '✅ License deleted!' : '❌ Error: ' + result.error);
+            closeModal('licenseModal');
+            refreshData();
+        }
+        
+        // User actions
+        async function resetHWID() {
+            if (!confirm(`Reset HWID for ${selectedUser}?`)) return;
+            const result = await api('/api/user/reset-hwid', 'POST', { username: selectedUser });
+            alert(result.success ? '✅ HWID reset!' : '❌ Error: ' + result.error);
+            closeModal('userModal');
+            refreshData();
+        }
+        
+        async function deleteUser() {
+            if (!confirm(`Delete user ${selectedUser}?`)) return;
+            const result = await api('/api/user/delete', 'POST', { username: selectedUser });
+            alert(result.success ? '✅ User deleted!' : '❌ Error: ' + result.error);
+            closeModal('userModal');
+            refreshData();
+        }
+        
+        // Close modal on outside click
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+        
+        // Init on load
+        init();
+    </script>
+</body>
+</html>
